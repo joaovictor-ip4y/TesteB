@@ -53,6 +53,15 @@ jobs:
         run: |
           # Usando xmlstarlet para extrair a cobertura de código
           coverage=$(xmlstarlet sel -t -m "//coverage" -v "line-rate" build/coverage/coverage.xml)
+          echo "Coverage extracted: $coverage"
+          
+          # Verificar se a extração foi bem-sucedida
+          if [ -z "$coverage" ]; then
+            echo "Error: Failed to extract coverage from XML."
+            exit 1
+          fi
+
+          # Comparar a cobertura com o limite de 60%
           echo "Coverage: $coverage%"
           if (( $(echo "$coverage < 0.60" | bc -l) )); then
             echo "Coverage ($coverage%) is below the threshold of 60%."
