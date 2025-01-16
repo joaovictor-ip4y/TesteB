@@ -56,7 +56,7 @@ jobs:
         run: |
           # Usando xmlstarlet para extrair a cobertura de código
           coverage=$(xmlstarlet sel -t -m "//coverage" -v "line-rate" build/coverage/coverage.xml)
-          
+
           # Exibe o valor extraído
           echo "Coverage extracted: $coverage"
 
