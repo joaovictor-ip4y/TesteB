@@ -47,22 +47,28 @@ jobs:
       - name: Install xmlstarlet
         run: sudo apt-get install xmlstarlet
 
-      # 7. Valida a cobertura mínima de 60%
+      # 7. Exibir o conteúdo do XML para depuração
+      - name: Display Coverage XML content
+        run: cat build/coverage/coverage.xml
+
+      # 8. Valida a cobertura mínima de 60%
       - name: Check coverage threshold
         id: check-coverage
         run: |
           # Usando xmlstarlet para extrair a cobertura de código
           coverage=$(xmlstarlet sel -t -m "//coverage" -v "line-rate" build/coverage/coverage.xml)
           echo "Coverage extracted: $coverage"
-          
+
           # Verificar se a extração foi bem-sucedida
           if [ -z "$coverage" ]; then
             echo "Error: Failed to extract coverage from XML."
             exit 1
           fi
 
+          # Log adicional para verificar o valor extraído
+          echo "Coverage (numeric): $coverage"
+
           # Comparar a cobertura com o limite de 60%
-          echo "Coverage: $coverage%"
           if (( $(echo "$coverage < 0.60" | bc -l) )); then
             echo "Coverage ($coverage%) is below the threshold of 60%."
             exit 1
@@ -70,6 +76,6 @@ jobs:
             echo "Coverage ($coverage%) meets the required threshold."
           fi
 
-      # 8. Mostra os resultados no log
+      # 9. Mostra os resultados no log
       - name: Display coverage results
         run: cat build/coverage/coverage.xml
