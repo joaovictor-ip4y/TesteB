@@ -47,11 +47,17 @@ jobs:
       - name: Install xmlstarlet
         run: sudo apt-get install xmlstarlet
 
-      # 7. Exibir o conteúdo do XML para depuração
+      # 7. Exibe o conteúdo do XML para depuração (opcional)
       - name: Display Coverage XML content
         run: cat build/coverage/coverage.xml
 
-      # 8. Valida a cobertura mínima de 60%
+      # 8. Envia o relatório para o Codecov
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: build/coverage/coverage.xml
+
+      # 9. Valida a cobertura mínima de 60%
       - name: Check coverage threshold
         id: check-coverage
         run: |
@@ -65,17 +71,11 @@ jobs:
             exit 1
           fi
 
-          # Log adicional para verificar o valor extraído
-          echo "Coverage (numeric): $coverage"
-
           # Comparar a cobertura com o limite de 60%
+          echo "Coverage: $coverage%"
           if (( $(echo "$coverage < 0.60" | bc -l) )); then
             echo "Coverage ($coverage%) is below the threshold of 60%."
             exit 1
           else
             echo "Coverage ($coverage%) meets the required threshold."
           fi
-
-      # 9. Mostra os resultados no log
-      - name: Display coverage results
-        run: cat build/coverage/coverage.xml
