@@ -49,15 +49,18 @@ jobs:
 
       # 7. Exibe o conteúdo do XML para depuração
       - name: Display Coverage XML content
-        run: cat build/coverage/coverage.xml
+        run: |
+          echo "Displaying the contents of build/coverage/coverage.xml:"
+          cat build/coverage/coverage.xml
 
       # 8. Usando xmlstarlet para extrair a cobertura de código e log de depuração
       - name: Extract and Check Coverage
         run: |
-          # Usando xmlstarlet para extrair a cobertura de código
+          # Extrair a cobertura usando xmlstarlet
+          echo "Extracting coverage using xmlstarlet..."
           coverage=$(xmlstarlet sel -t -m "//coverage" -v "line-rate" build/coverage/coverage.xml)
 
-          # Exibe o valor extraído
+          # Exibir o valor extraído
           echo "Coverage extracted: $coverage"
 
           # Verificar se a extração foi bem-sucedida
@@ -66,10 +69,8 @@ jobs:
             exit 1
           fi
 
-          # Exibir a cobertura extraída antes da comparação
-          echo "Coverage (numeric): $coverage"
-
           # Comparar a cobertura com o limite de 60%
+          echo "Coverage (numeric): $coverage"
           if (( $(echo "$coverage < 0.60" | bc -l) )); then
             echo "Coverage ($coverage%) is below the threshold of 60%."
             exit 1
