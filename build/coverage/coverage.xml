@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<coverage generated="1737033029">
+  <project timestamp="1737033029">
+    <file name="/home/joao_victor/Projects/TesteB/src/Exemplo.php">
+      <class name="App\Exemplo" namespace="global">
+        <metrics complexity="1" methods="1" coveredmethods="1" conditionals="0" coveredconditionals="0" statements="1" coveredstatements="1" elements="2" coveredelements="2"/>
+      </class>
+      <line num="7" type="method" name="soma" visibility="public" complexity="1" crap="1" count="1"/>
+      <line num="9" type="stmt" count="1"/>
+      <metrics loc="12" ncloc="12" classes="1" methods="1" coveredmethods="1" conditionals="0" coveredconditionals="0" statements="1" coveredstatements="1" elements="2" coveredelements="2"/>
+    </file>
+    <metrics files="1" loc="12" ncloc="12" classes="1" methods="1" coveredmethods="1" conditionals="0" coveredconditionals="0" statements="1" coveredstatements="1" elements="2" coveredelements="2"/>
+  </project>
+</coverage>

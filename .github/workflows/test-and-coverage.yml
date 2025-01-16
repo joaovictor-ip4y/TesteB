@@ -1,0 +1,57 @@
+name: PHP Test and Coverage
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout do código
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # 2. Configuração do PHP
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          coverage: xdebug
+
+      # 3. Instala as dependências do Composer
+      - name: Install dependencies
+        run: composer install --no-progress --no-suggest
+
+      # 4. Executa os testes com PHPUnit e coleta a cobertura
+      - name: Run tests with coverage
+        run: |
+          mkdir -p build/coverage
+          vendor/bin/phpunit --coverage-text --coverage-clover=build/coverage/coverage.xml
+
+      # 5. Publica o relatório de cobertura como artefato
+      - name: Upload Coverage Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-report
+          path: build/coverage/coverage.xml
+
+      # 6. Valida a cobertura mínima de 60%
+      - name: Check coverage threshold
+        id: check-coverage
+        run: |
+          coverage=$(grep -oP '(?<=<line-rate>)[0-9]+\.[0-9]+' build/coverage/coverage.xml | awk '{sum+=$1; count+=1} END {if (count>0) print (sum/count)*100}')
+          echo "Coverage: $coverage%"
+          if (( $(echo "$coverage < 60" | bc -l) )); then
+            echo "Coverage ($coverage%) is below the threshold of 60%."
+            exit 1
+          fi
+
+      # 7. Mostra os resultados no log
+      - name: Display coverage results
+        run: cat build/coverage/coverage.xml

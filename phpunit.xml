@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit bootstrap="vendor/autoload.php" colors="true">
+  <testsuites>
+    <testsuite name="Default">
+      <directory>tests</directory>
+    </testsuite>
+  </testsuites>
+  
+  <coverage>
+    <include>
+      <directory>src</directory> <!-- Inclui os arquivos do diretório 'src' -->
+    </include>
+    <report>
+      <clover outputFile="build/coverage/coverage.xml"/>
+    </report>
+  </coverage>
+</phpunit>
