@@ -34,31 +34,33 @@ jobs:
       - name: Run tests with coverage
         run: |
           mkdir -p build/coverage
-          vendor/bin/phpunit --coverage-text --coverage-clover=build/coverage/coverage.xml
+          vendor/bin/phpunit --coverage-clover=build/coverage/coverage.xml
 
-      # 5. Publica o relatório de cobertura como artefato
-      - name: Upload Coverage Report
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-report
-          path: build/coverage/coverage.xml
+      # 5. Verificar se o arquivo de cobertura foi gerado
+      - name: Verify Coverage File
+        run: |
+          if [ ! -f build/coverage/coverage.xml ]; then
+            echo "Error: Coverage file not found!"
+            exit 1
+          fi
+          echo "Coverage file found successfully."
 
-      # 6. Instala o xmlstarlet para manipulação de XML
-      - name: Install xmlstarlet
-        run: sudo apt-get install xmlstarlet
-
-      # 7. Exibe o conteúdo do XML para depuração
+      # 6. Exibir o conteúdo do arquivo de cobertura para depuração
       - name: Display Coverage XML content
         run: |
           echo "Displaying the contents of build/coverage/coverage.xml:"
           cat build/coverage/coverage.xml
 
-      # 8. Usando xmlstarlet para extrair a cobertura de código e verificar
+      # 7. Instalar xmlstarlet para análise de XML
+      - name: Install xmlstarlet
+        run: sudo apt-get install -y xmlstarlet
+
+      # 8. Extrair e validar cobertura
       - name: Extract and Check Coverage
         run: |
           # Extrair a cobertura usando xmlstarlet
           echo "Extracting coverage using xmlstarlet..."
-          coverage=$(xmlstarlet sel -t -m "//coverage" -v "line-rate" build/coverage/coverage.xml)
+          coverage=$(xmlstarlet sel -t -m "//coverage" -v "@line-rate" build/coverage/coverage.xml)
 
           # Exibir o valor extraído
           echo "Coverage extracted: $coverage"
@@ -77,3 +79,10 @@ jobs:
           else
             echo "Coverage ($coverage%) meets the required threshold."
           fi
+
+      # 9. Publicar o relatório de cobertura como artefato
+      - name: Upload Coverage Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: build/coverage/coverage.xml
