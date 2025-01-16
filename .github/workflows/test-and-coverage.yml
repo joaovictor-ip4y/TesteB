@@ -1,88 +1,43 @@
-name: PHP Test and Coverage
+name: Coverage Check
 
 on:
-  pull_request:
-    branches:
-      - main
-      - dev
   push:
     branches:
       - main
-      - dev
+  pull_request:
 
 jobs:
   test:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout do código
+      # Checkout do código
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # 2. Configuração do PHP
+      # Configuração do PHP
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.1'
-          coverage: xdebug
+          php-version: '8.1' # Altere conforme a versão do PHP usada no seu projeto
 
-      # 3. Instala as dependências do Composer
+      # Instalar dependências do projeto
       - name: Install dependencies
-        run: composer install --no-progress --no-suggest
+        run: composer install --no-progress --no-suggest --prefer-dist
 
-      # 4. Executa os testes com PHPUnit e coleta a cobertura
+      # Executar os testes com cobertura
       - name: Run tests with coverage
         run: |
-          mkdir -p build/coverage
-          vendor/bin/phpunit --coverage-clover=build/coverage/coverage.xml
+          vendor/bin/phpunit --coverage-text --coverage-clover=coverage.xml
+        env:
+          XDEBUG_MODE: coverage
 
-      # 5. Verificar se o arquivo de cobertura foi gerado
-      - name: Verify Coverage File
+      # Analisar a cobertura mínima
+      - name: Check code coverage
         run: |
-          if [ ! -f build/coverage/coverage.xml ]; then
-            echo "Error: Coverage file not found!"
+          COVERAGE=$(php -r "echo (int) preg_replace('/[^0-9]/', '', shell_exec('grep "Lines" coverage.xml | grep -oP \'[0-9]+(?=%)\''));")
+          echo "Code coverage: $COVERAGE%"
+          if [ "$COVERAGE" -lt 60 ]; then
+            echo "Code coverage is below 60%. Failing the workflow."
             exit 1
           fi
-          echo "Coverage file found successfully."
-
-      # 6. Exibir o conteúdo do arquivo de cobertura para depuração
-      - name: Display Coverage XML content
-        run: |
-          echo "Displaying the contents of build/coverage/coverage.xml:"
-          cat build/coverage/coverage.xml
-
-      # 7. Instalar xmlstarlet para análise de XML
-      - name: Install xmlstarlet
-        run: sudo apt-get install -y xmlstarlet
-
-      # 8. Extrair e validar cobertura
-      - name: Extract and Check Coverage
-        run: |
-          # Extrair a cobertura usando xmlstarlet
-          echo "Extracting coverage using xmlstarlet..."
-          coverage=$(xmlstarlet sel -t -m "//coverage" -v "@line-rate" build/coverage/coverage.xml)
-
-          # Exibir o valor extraído
-          echo "Coverage extracted: $coverage"
-
-          # Verificar se a extração foi bem-sucedida
-          if [ -z "$coverage" ]; then
-            echo "Error: Failed to extract coverage from XML."
-            exit 1
-          fi
-
-          # Comparar a cobertura com o limite de 60%
-          echo "Coverage (numeric): $coverage"
-          if (( $(echo "$coverage < 0.60" | bc -l) )); then
-            echo "Coverage ($coverage%) is below the threshold of 60%."
-            exit 1
-          else
-            echo "Coverage ($coverage%) meets the required threshold."
-          fi
-
-      # 9. Publicar o relatório de cobertura como artefato
-      - name: Upload Coverage Report
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-report
-          path: build/coverage/coverage.xml
