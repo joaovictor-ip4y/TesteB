@@ -38,7 +38,86 @@ jobs:
 
       # 5. Publica o relatório de cobertura como artefato
       - name: Upload Coverage Report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: build/coverage/coverage.xml
+
+      # 6. Instala o xmlstarlet para manipulação de XML
+      - name: Install xmlstarlet
+        run: sudo apt-get install xmlstarlet
+
+      # 7. Exibe o conteúdo do XML para depuração
+      - name: Display Coverage XML content
+        run: |
+          echo "Displaying the contents of build/coverage/coverage.xml:"
+          cat build/coverage/coverage.xml
+
+      # 8. Usando xmlstarlet para extrair a cobertura de código e log de depuração
+      - name: Extract and Check Coverage
+        run: |
+          # Extrair a cobertura usando xmlstarlet
+          echo "Extracting coverage using xmlstarlet..."
+          coverage=$(xmlstarlet sel -t -m "//coverage" -v "line-rate" build/coverage/coverage.xml)
+
+          # Exibir o valor extraído
+          echo "Coverage extracted: $coverage"
+
+          # Verificar se a extração foi bem-sucedida
+          if [ -z "$coverage" ]; then
+            echo "Error: Failed to extract coverage from XML."
+            exit 1
+          fi
+
+          # Comparar a cobertura com o limite de 60%
+          echo "Coverage (numeric): $coverage"
+          if (( $(echo "$coverage < 0.60" | bc -l) )); then
+            echo "Coverage ($coverage%) is below the threshold of 60%."
+            exit 1
+          else
+            echo "Coverage ($coverage%) meets the required threshold."
+          fi
+name: PHP Test and Coverage
+
+on:
+  pull_request:
+    branches:
+      - main
+      - dev
+  push:
+    branches:
+      - main
+      - dev
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout do código
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # 2. Configuração do PHP
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          coverage: xdebug
+
+      # 3. Instala as dependências do Composer
+      - name: Install dependencies
+        run: composer install --no-progress --no-suggest
+
+      # 4. Executa os testes com PHPUnit e coleta a cobertura
+      - name: Run tests with coverage
+        run: |
+          mkdir -p build/coverage
+          vendor/bin/phpunit --coverage-text --coverage-clover=build/coverage/coverage.xml
+
+      # 5. Publica o relatório de cobertura como artefato
+      - name: Upload Coverage Report
+        uses: actions/upload-artifact@v4
         with:
           name: coverage-report
           path: build/coverage/coverage.xml
