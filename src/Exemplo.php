@@ -1,5 +1,4 @@
-<?php
-
+// src/App/Exemplo.php
 namespace App;
 
 class Exemplo
@@ -7,5 +6,10 @@ class Exemplo
     public function soma(int $a, int $b): int
     {
         return $a + $b;
+    }
+
+    public function subtrai(int $a, int $b): int
+    {
+        return $a - $b;
     }
 }
