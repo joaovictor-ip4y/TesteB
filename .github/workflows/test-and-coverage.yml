@@ -1,35 +1,58 @@
-name: PHP Code Coverage
+name: Run PHPUnit with Coverage
 
 on:
+  push:
+    branches:
+      - main
   pull_request:
     branches:
       - main
 
 jobs:
-  phpunit:
+  test:
     runs-on: ubuntu-latest
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
 
+    steps:
+      # Checkout do código
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Configuração do PHP
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.1'
+          php-version: '8.3'
+          extensions: xdebug
 
+      # Instalação das dependências do Composer
       - name: Install dependencies
         run: |
           composer install
 
+      # Executa os testes PHPUnit
       - name: Run PHPUnit tests with coverage
         run: |
-          vendor/bin/phpunit --coverage-text --coverage-clover=coverage.xml
+          vendor/bin/phpunit --coverage-clover=coverage.xml
 
-      - name: Check code coverage
+      # Verificar a cobertura do código
+      - name: Check coverage
         run: |
-          COVERAGE=$(php -r "libxml_use_internal_errors(true); \$xml = simplexml_load_file('coverage.xml'); echo \$xml->project->metrics->coverage;")
+          COVERAGE=$(php -r "
+              libxml_use_internal_errors(true);
+              \$xml = simplexml_load_file('coverage.xml');
+              if (\$xml === false) {
+                  echo 'Erro ao carregar o arquivo coverage.xml';
+                  exit(1);
+              }
+              // Calcula a cobertura como (coveredelements / elements) * 100
+              \$coverage = (\$xml->project->metrics['coveredelements'] / \$xml->project->metrics['elements']) * 100;
+              echo \$coverage;
+          ")
+
+          # Verifica se a cobertura está abaixo de 60%
           if (( $(echo "$COVERAGE < 60" | bc -l) )); then
-            echo "Code coverage is below 60%, coverage: $COVERAGE"
-            exit 1
+              echo "Cobertura abaixo de 60%: $COVERAGE%"
+              exit 1
+          else
+              echo "Cobertura OK: $COVERAGE%"
           fi
