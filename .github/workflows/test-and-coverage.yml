@@ -1,62 +1,35 @@
-
-name: Run tests and upload coverage
+name: PHP Code Coverage
 
 on:
-  push:
+  pull_request:
     branches:
-      - main  # Defina os branches de sua preferência
+      - main
 
 jobs:
-  test:
-    name: Run tests and collect coverage
+  phpunit:
     runs-on: ubuntu-latest
-
+    
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-      - name: Set up Node
-        uses: actions/setup-node@v4
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
 
       - name: Install dependencies
-        run: npm install
-
-      - name: Run tests
-        run: npx jest --coverage
-
-      - name: Upload results to Codecov
-        uses: codecov/codecov-action@v5
-        with:
-          # Remova o token, pois o repositório é público
-          slug: joaovictor-ip4y/TesteB
-
-      - name: Wait for Codecov to process
         run: |
-          # Aguarda o Codecov processar a cobertura
-          sleep 60  # Tempo de espera para garantir que os dados sejam processados
+          composer install
 
-      - name: Ensure coverage is above 60%
+      - name: Run PHPUnit tests with coverage
         run: |
-          # Obtém os dados de cobertura da API do Codecov
-          response=$(curl -s https://codecov.io/api/gh/${{ github.repository }}/reports/coverage)
-          echo "Response from Codecov API: $response"
-          
-          # Verifica se a resposta está vazia ou nula
-          if [[ -z "$response" || "$response" == "null" ]]; then
-              echo "Failed to retrieve valid coverage data from Codecov API."
-              exit 1
+          vendor/bin/phpunit --coverage-text --coverage-clover=coverage.xml
+
+      - name: Check code coverage
+        run: |
+          COVERAGE=$(php -r "libxml_use_internal_errors(true); \$xml = simplexml_load_file('coverage.xml'); echo \$xml->project->metrics->coverage;")
+          if (( $(echo "$COVERAGE < 60" | bc -l) )); then
+            echo "Code coverage is below 60%, coverage: $COVERAGE"
+            exit 1
           fi
-          
-          # Extrai a cobertura total da resposta
-          coverage=$(echo "$response" | jq -r '.total.coverage // 0')
-          
-          # Verifica se a cobertura é inferior a 60%
-          if (( $(echo "$coverage < 60" | bc -l) )); then
-              echo "Coverage is below 60% ($coverage%), failing the workflow."
-              exit 1
-          fi
-          
-          echo "Coverage is above 60% ($coverage%), proceeding."
-        shell: /bin/bash -e {0}
