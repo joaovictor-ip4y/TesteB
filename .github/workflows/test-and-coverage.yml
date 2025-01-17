@@ -57,13 +57,32 @@ jobs:
               echo "Cobertura OK: $COVERAGE%"
           fi
 
-      # Criação do relatório de cobertura
-      - name: Create code coverage report
-        run: |
-          dotnet tool install -g dotnet-reportgenerator-globaltool
-          reportgenerator -reports:coverage.xml -targetdir:CodeCoverage -reporttypes:MarkdownSummary,Cobertura
+      # Upload do relatório de cobertura como artefato
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-report
+          path: coverage.xml
 
-      # Escrever no resumo do GitHub
-      - name: Write to Job Summary
+      # Envia um comentário na PR com o status da cobertura
+      - name: Comment on PR with coverage
+        if: github.event_name == 'pull_request'
         run: |
-          cat CodeCoverage/SummaryGithub.md >> $GITHUB_STEP_SUMMARY
+          COVERAGE=$(php -r "
+              libxml_use_internal_errors(true);
+              \$xml = simplexml_load_file('coverage.xml');
+              if (\$xml === false) {
+                  echo 'Erro ao carregar o arquivo coverage.xml';
+                  exit(1);
+              }
+              // Calcula a cobertura como (coveredelements / elements) * 100
+              \$coverage = (\$xml->project->metrics['coveredelements'] / \$xml->project->metrics['elements']) * 100;
+              echo \$coverage;
+          ")
+
+          COMMENT_BODY="Cobertura do código: $COVERAGE%"
+          
+          curl -X POST \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -d "{\"body\": \"$COMMENT_BODY\"}" \
+            "https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments"
