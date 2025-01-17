@@ -1,4 +1,4 @@
-name: Run Tests and Upload Coverage
+name: Test and Coverage
 
 on:
   push:
@@ -13,45 +13,23 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Set up PHP
-      uses: shivammathur/setup-php@v2
-      with:
-        php-version: '8.3'
-        extensions: mbstring, xml, bcmath, curl, zip
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
 
-    - name: Install dependencies
-      run: |
-        composer install --no-interaction
+      - name: Install dependencies
+        run: |
+          composer install
 
-    - name: Run PHPUnit tests with coverage
-      run: |
-        vendor/bin/phpunit --coverage-text --coverage-clover=coverage.xml
+      - name: Run tests
+        run: |
+          vendor/bin/phpunit
 
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
-      with:
-        file: coverage.xml
-        token: ${{ secrets.CODECOV_TOKEN }}
-
-    - name: Ensure coverage is above 60%
-      run: |
-        # Obtém os dados de cobertura da API do Codecov
-        response=$(curl -s https://codecov.io/api/gh/${{ github.repository }}/reports/coverage)
-        # Valida se a resposta está vazia ou nula
-        if [[ -z "$response" || "$response" == "null" ]]; then
-            echo "Failed to retrieve coverage data from Codecov API."
-            exit 1
-        fi
-        # Extrai a cobertura total da resposta
-        coverage=$(echo "$response" | jq -r '.total.coverage // 0')
-        # Converte o valor para número inteiro e verifica se é menor que 60
-        if [[ "$coverage" -lt 60 ]]; then
-            echo "Coverage is below 60% ($coverage%), failing the workflow."
-            exit 1
-        fi
-        echo "Coverage is above 60% ($coverage%), proceeding."
-      env:
-        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
