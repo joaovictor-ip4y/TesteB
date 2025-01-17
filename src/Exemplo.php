@@ -1,14 +1,11 @@
 <?php
 
-use PHPUnit\Framework\TestCase;
-use App\Exemplo;
+namespace App;
 
-class ExemploTest extends TestCase
+class Exemplo
 {
-    public function testSoma()
+    public function soma(int $a, int $b): int
     {
-        $exemplo = new Exemplo();
-        $resultado = $exemplo->soma(1, 2);
-        $this->assertEquals(3, $resultado);
+        return $a + $b;
     }
 }
