@@ -1,17 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<phpunit bootstrap="vendor/autoload.php" colors="true">
-  <testsuites>
-    <testsuite name="Default">
-      <directory>tests</directory>
-    </testsuite>
-  </testsuites>
-  
-  <coverage>
-    <include>
-      <directory>src</directory> <!-- Inclui os arquivos do diretório 'src' -->
-    </include>
-    <report>
-      <clover outputFile="build/coverage/coverage.xml"/>
-    </report>
-  </coverage>
+<phpunit
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/10.0/phpunit.xsd"
+    bootstrap="vendor/autoload.php"
+    colors="true"
+    verbose="true"
+    stopOnFailure="true"
+>
+    <testsuites>
+        <testsuite name="Default">
+            <directory>tests</directory>
+        </testsuite>
+    </testsuites>
+
+    <coverage processUncoveredFiles="true">
+        <include>
+            <directory>src</directory>
+        </include>
+        <report>
+            <clover outputFile="build/coverage/coverage.xml"/>
+            <html outputDirectory="build/coverage/html"/>
+        </report>
+    </coverage>
 </phpunit>
