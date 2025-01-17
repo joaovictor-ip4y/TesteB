@@ -1,15 +1,26 @@
 <?php
 
-namespace Tests;
-
-use PHPUnit\Framework\TestCase;
 use App\Exemplo;
+use PHPUnit\Framework\TestCase;
 
 class ExemploTest extends TestCase
 {
-    public function testSoma(): void
+    private Exemplo $exemplo;
+
+    protected function setUp(): void
     {
-        $exemplo = new Exemplo();
-        $this->assertEquals(4, $exemplo->soma(2, 2));
+        $this->exemplo = new Exemplo();
+    }
+
+    public function testSoma()
+    {
+        $resultado = $this->exemplo->soma(2, 3);
+        $this->assertEquals(5, $resultado);
+    }
+
+    public function testSubtrai()
+    {
+        $resultado = $this->exemplo->subtrai(5, 3);
+        $this->assertEquals(2, $resultado);
     }
 }
