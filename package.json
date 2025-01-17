@@ -1,0 +1,26 @@
+{
+  "name": "testeb",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/joaovictor-ip4y/TesteB.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/joaovictor-ip4y/TesteB/issues"
+  },
+  "homepage": "https://github.com/joaovictor-ip4y/TesteB#readme",
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}

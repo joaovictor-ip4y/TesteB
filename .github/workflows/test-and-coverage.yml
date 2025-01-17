@@ -1,4 +1,4 @@
-name: Run Tests and Upload Coverage
+name: Run PHPUnit with Coverage
 
 on:
   push:
@@ -13,45 +13,46 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+      # Checkout do código
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Set up PHP
-      uses: shivammathur/setup-php@v2
-      with:
-        php-version: '8.3'
-        extensions: mbstring, xml, bcmath, curl, zip
+      # Configuração do PHP
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: xdebug
 
-    - name: Install dependencies
-      run: |
-        composer install --no-interaction
-    - name: Run PHPUnit tests with coverage
-      run: |
-        vendor/bin/phpunit --coverage-text --coverage-clover=coverage.xml
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
-      with:
-        file: coverage.xml
-        token: ${{ secrets.CODECOV_TOKEN }}
+      # Instalação das dependências do Composer
+      - name: Install dependencies
+        run: |
+          composer install
 
-    - name: Check Codecov Coverage
-      uses: codecov/codecov-action@v3
-      with:
-        file: coverage.xml
-        token: ${{ secrets.CODECOV_TOKEN }}
-      env:
-        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-      continue-on-error: true # Allow to fail without failing the entire workflow
+      # Executa os testes PHPUnit
+      - name: Run PHPUnit tests with coverage
+        run: |
+          vendor/bin/phpunit --coverage-clover=coverage.xml
 
-    - name: Ensure coverage is above 60%
-      run: |
-        coverage=$(curl -s https://codecov.io/api/gh/${{ github.repository }}/reports/coverage | jq -r '.total.coverage')
-        # Verificar se a cobertura é menor que 60% de forma correta
-        coverage_value=$(echo "$coverage" | awk '{print int($1)}')
-        if [ "$coverage_value" -lt 60 ]; then
-          echo "Coverage is below 60%, failing the workflow."
-          exit 1
-        fi
-        echo "Coverage is above 60%, proceeding."
+      # Verificar a cobertura do código
+      - name: Check coverage
+        run: |
+          COVERAGE=$(php -r "
+              libxml_use_internal_errors(true);
+              \$xml = simplexml_load_file('coverage.xml');
+              if (\$xml === false) {
+                  echo 'Erro ao carregar o arquivo coverage.xml';
+                  exit(1);
+              }
+              // Calcula a cobertura como (coveredelements / elements) * 100
+              \$coverage = (\$xml->project->metrics['coveredelements'] / \$xml->project->metrics['elements']) * 100;
+              echo \$coverage;
+          ")
 
-
+          # Verifica se a cobertura está abaixo de 60%
+          if (( $(echo "$COVERAGE < 60" | bc -l) )); then
+              echo "Cobertura abaixo de 60%: $COVERAGE%"
+              exit 1
+          else
+              echo "Cobertura OK: $COVERAGE%"
+          fi
