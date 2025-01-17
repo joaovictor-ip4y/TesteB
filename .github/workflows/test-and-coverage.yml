@@ -38,20 +38,28 @@ jobs:
 
       - name: Ensure coverage is above 60%
         run: |
+          # Aguarda o Codecov processar a cobertura antes de fazer a consulta
+          sleep 30
+
           # Obtém os dados de cobertura da API do Codecov
           response=$(curl -s https://codecov.io/api/gh/${{ github.repository }}/reports/coverage)
+          echo "Response from Codecov API: $response"
+
           # Valida se a resposta está vazia ou nula
           if [[ -z "$response" || "$response" == "null" ]]; then
             echo "Failed to retrieve coverage data from Codecov API."
             exit 1
           fi
+
           # Extrai a cobertura total da resposta
           coverage=$(echo "$response" | jq -r '.total.coverage // 0')
-          # Converte o valor para número inteiro e verifica se é menor que 60
+
+          # Verifica se a cobertura é inferior a 60%
           if (( $(echo "$coverage < 60" | bc -l) )); then
             echo "Coverage is below 60% ($coverage%), failing the workflow."
             exit 1
           fi
+
           echo "Coverage is above 60% ($coverage%), proceeding."
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
