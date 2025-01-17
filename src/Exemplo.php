@@ -13,4 +13,4 @@ class Exemplo
     {
         return $a - $b;
     }
-}s
+}
