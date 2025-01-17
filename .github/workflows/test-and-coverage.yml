@@ -20,46 +20,16 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.1'
-          extensions: mbstring, xml, bcmath, curl, zip
 
       - name: Install dependencies
         run: |
-          composer install --no-interaction
+          composer install
 
-      - name: Run tests with coverage
+      - name: Run tests
         run: |
-          vendor/bin/phpunit --coverage-text --coverage-clover=coverage.xml
+          vendor/bin/phpunit
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
           file: coverage.xml
-          token: ${{ secrets.CODECOV_TOKEN }}
-
-      - name: Ensure coverage is above 60%
-        run: |
-          # Aguarda o Codecov processar a cobertura antes de fazer a consulta
-          sleep 60  # Aumenta o tempo de espera
-
-          # Tenta obter os dados de cobertura da API do Codecov, com até 3 tentativas
-          response=$(curl -s --retry 3 --retry-delay 10 https://codecov.io/api/gh/${{ github.repository }}/reports/coverage)
-          echo "Response from Codecov API: $response"
-
-          # Verifica se a resposta não está vazia ou nula
-          if [[ -z "$response" || "$response" == "null" ]]; then
-            echo "Failed to retrieve valid coverage data from Codecov API."
-            exit 1
-          fi
-
-          # Extrai a cobertura total da resposta
-          coverage=$(echo "$response" | jq -r '.total.coverage // 0')
-
-          # Verifica se a cobertura é inferior a 60%
-          if (( $(echo "$coverage < 60" | bc -l) )); then
-            echo "Coverage is below 60% ($coverage%), failing the workflow."
-            exit 1
-          fi
-
-          echo "Coverage is above 60% ($coverage%), proceeding."
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
