@@ -39,15 +39,15 @@ jobs:
       - name: Ensure coverage is above 60%
         run: |
           # Aguarda o Codecov processar a cobertura antes de fazer a consulta
-          sleep 30
+          sleep 60  # Aumenta o tempo de espera
 
-          # Obtém os dados de cobertura da API do Codecov
-          response=$(curl -s https://codecov.io/api/gh/${{ github.repository }}/reports/coverage)
+          # Tenta obter os dados de cobertura da API do Codecov, com até 3 tentativas
+          response=$(curl -s --retry 3 --retry-delay 10 https://codecov.io/api/gh/${{ github.repository }}/reports/coverage)
           echo "Response from Codecov API: $response"
 
-          # Valida se a resposta está vazia ou nula
+          # Verifica se a resposta não está vazia ou nula
           if [[ -z "$response" || "$response" == "null" ]]; then
-            echo "Failed to retrieve coverage data from Codecov API."
+            echo "Failed to retrieve valid coverage data from Codecov API."
             exit 1
           fi
 
